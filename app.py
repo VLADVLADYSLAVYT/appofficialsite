@@ -4,8 +4,10 @@ import json
 import time
 from flask import Flask, request, jsonify
 from mcrcon import MCRcon
+from flask_cors import CORS  # <-- додали CORS
 
 app = Flask(__name__)
+CORS(app)  # <-- дозволяємо запити з будь-якого домену (для тесту можна обмежити пізніше)
 
 # LiqPay ключі
 LIQPAY_PUBLIC = "sandbox_i28524890692"

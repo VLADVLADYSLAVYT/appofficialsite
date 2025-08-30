@@ -2,12 +2,16 @@ import base64
 import hashlib
 import json
 import time
+import os
 from flask import Flask, request, jsonify
 from mcrcon import MCRcon
-from flask_cors import CORS  # <-- додали CORS
+from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # <-- дозволяємо запити з будь-якого домену (для тесту можна обмежити пізніше)
+
+# Дозволяємо лише запити з твого сайту на Netlify
+CORS(app, resources={r"/*": {"origins": "https://survivalserverofficial.netlify.app"}},
+     supports_credentials=True)
 
 # LiqPay ключі
 LIQPAY_PUBLIC = "sandbox_i28524890692"
@@ -32,8 +36,11 @@ def liqpay_sign(data):
     ).decode()
 
 # Створення платежу
-@app.route("/create-payment", methods=["POST"])
+@app.route("/create-payment", methods=["POST", "OPTIONS"])
 def create_payment():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200  # preflight-відповідь
+
     body = request.json
     amount = body.get("amount")
     description = body.get("description")
@@ -60,8 +67,11 @@ def create_payment():
     return jsonify({"data": data_str, "signature": signature})
 
 # Callback від LiqPay
-@app.route("/donate", methods=["POST"])
+@app.route("/donate", methods=["POST", "OPTIONS"])
 def donate():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200  # preflight-відповідь
+
     data = request.form.get("data")
     signature = request.form.get("signature")
 
@@ -91,4 +101,5 @@ def donate():
         return jsonify({"status": "not paid"}), 200
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))  # важливо для Railway/Render
+    app.run(host="0.0.0.0", port=port)

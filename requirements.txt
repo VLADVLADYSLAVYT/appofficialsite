@@ -1,2 +1,3 @@
-flask
-mcrcon
+Flask==2.3.3
+mcrcon==0.3.0
+flask-cors==4.1.1
